@@ -4,6 +4,8 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+var Mongoose = require("mongoose");
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
@@ -25,6 +27,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+
+
+// Mongo database 
+const url = "mongodb://localhost:27017/conFusion";
+const connection = Mongoose.connect(url);
+
+connection
+.then((res) => {
+  console.log("Mongo server is running ...");
+})
+.catch((err) => {
+  console.log(err.message);
+})
 
 app.use("/dishes", dishRouter);
 app.use("/leaders", leaderRouter);
