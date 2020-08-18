@@ -54,7 +54,7 @@ dishRouter.route("/:dishId")
             });
     })
     .put((req, res, next) => {
-        Dishes.findByIdAndUpdate(req.params.dishId, { $set: req.body }, { new: true})
+        Dishes.findByIdAndUpdate(req.params.dishId, { $set: req.body }, { new: true })
             .then((dish) => {
                 res.statusCode = 200;
                 res.json(dish);
@@ -74,6 +74,133 @@ dishRouter.route("/:dishId")
             })
             .catch((err) => {
                 console.log(err.message);
+            });
+    });
+
+dishRouter.route("/:dishId/comments")
+    .get((req, res, next) => {
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                if(dish) {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(dish.comments);
+                }
+                
+                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+            })
+            .catch((err) => {
+                next(err);
+            });
+    })
+    .post((req, res, next) => {
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                if(dish) {
+                    dish.comments.push(req.body);  
+                    return dish.save()                   
+                }
+
+                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+            })
+            .then((newDish) => {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(newDish);
+            })
+            .catch((err) => {
+                next(err)
+            });
+    })
+    .put((req, res, next) =>{
+        res.statusCode = 403;
+        res.end("PUT method is not supported");
+    })
+    .delete((req, res, next) => {
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                if(dish) {
+                    dish.comments = [];
+                    return dish.save();                  
+                }
+
+                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+            })
+            .then((newDish) => {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(newDish);
+            })
+            .catch((err) => {
+                next(err);
+            });
+    });
+
+dishRouter.route("/:dishId/comments/:commentId")
+    .get((req, res, next) => {
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                if(dish && dish.comments.id(req.params.commentId)) {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(dish.comments.id(req.params.commentId));                 
+                }
+
+                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+            })
+            .catch((err) => {
+                next(err);
+            });
+    })
+    .post((req, res, next) => {
+        res.statusCode = 403;
+        res.end("POST method is not supported");
+    })
+    .put((req, res, next) => {
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                if(dish && dish.comments.id(req.params.commentId)) {
+                    const comment = dish.comments.id(req.params.commentId);
+                    
+                    if(req.body.rating) {
+                        comment.rating = req.body.rating; 
+                    }
+
+                    if(req.body.comment) {
+                        comment.comment = req.body.comment;
+                    }
+
+                    return dish.save();
+                }
+
+                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+            })
+            .then((newDish) => {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(newDish);
+            })
+            .catch((err) => {
+                next(err);
+            });
+    })
+    .delete((req, res, next) => {
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                if(dish && dish.comments.id(req.params.commentId)) {
+                    dish.comments.id(req.params.commentId).remove();
+                    
+                    return dish.save();
+                }
+
+                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+            })
+            .then((newDish) => {
+                res.statusCode = 200;
+                res.json(newDish);
+            })
+            .catch((err) => {
+                next(err);
             });
     });
 
