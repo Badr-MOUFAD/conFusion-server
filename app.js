@@ -13,21 +13,13 @@ var dishRouter = require("./routes/dishRouter");
 var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
 
+var auth = require("./authentoication");
+
 var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-
 
 // Mongo database 
 const url = "mongodb://localhost:27017/conFusion";
@@ -39,7 +31,19 @@ connection
 })
 .catch((err) => {
   console.log(err.message);
-})
+});
+
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+app.use(auth);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
 
 app.use("/dishes", dishRouter);
 app.use("/leaders", leaderRouter);
