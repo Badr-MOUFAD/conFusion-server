@@ -15,7 +15,7 @@ function auth(req, res, next) {
     const [username, password] = auth;
 
     if(username === "admin" && password === "password") {
-        res.cookie("user", "admin", { signed: true });
+        req.session.user = "admin";
         next();
     }
     else {
