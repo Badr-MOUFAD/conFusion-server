@@ -6,6 +6,7 @@ var logger = require('morgan');
 
 var Mongoose = require("mongoose");
 
+var passport = require("passport");
 var session = require("express-session");
 var FileStore = require("session-file-store")(session);
 
@@ -16,7 +17,7 @@ var dishRouter = require("./routes/dishRouter");
 var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
 
-var auth = require("./authentoication");
+var authentication = require("./authentication")
 
 var app = express();
 
@@ -48,18 +49,18 @@ app.use(session({
   store: new FileStore()
 }));
 
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
-  if(req.session.user) {
-    if(req.session.user == "authenticated") {
-      next();
-
-      return ;
-    }
+  if(req.user) {
+    next();
+    return ;
   }
 
   const err = new Error("You are not authorized");
