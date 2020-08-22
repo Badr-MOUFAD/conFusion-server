@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const authenticate = require("../authentication");
 
 const leaderRouter = express.Router();
 
@@ -19,7 +20,7 @@ leaderRouter.route("/")
             next(err);
         })
     })
-    .post((req, res, next) => {
+    .post(authenticate.verifyUser, (req, res, next) => {
         Leaders.create(req.body)
         .then((leader) => {
             res.statusCode = 200;
@@ -30,11 +31,11 @@ leaderRouter.route("/")
             next(err);
         })
     })
-    .put((req, res, next) =>{
+    .put(authenticate.verifyUser, (req, res, next) =>{
         res.statusCode = 403;
         res.end("PUT method is not supported");
     })
-    .delete((req, res, next) =>{
+    .delete(authenticate.verifyUser, (req, res, next) =>{
         Leaders.remove({})
         .then(() => {
             res.statusCode = 200;
@@ -58,7 +59,7 @@ leaderRouter.route("/:leaderId")
             next(err);
         })
     })
-    .put((req, res, next) => {
+    .put(authenticate.verifyUser, (req, res, next) => {
         Leaders.findByIdAndUpdate(req.params.leaderId, { $set: req.body }, { new: true })
         .then((updatedleader) => {
             res.statusCode = 200;
@@ -69,11 +70,11 @@ leaderRouter.route("/:leaderId")
             next(err);
         })
     })
-    .post((req, res, next) => {
+    .post(authenticate.verifyUser, (req, res, next) => {
         res.statusCode = 403;
         res.end(`The POST operation is not allowed`);
     })
-    .delete((req, res, next) => {
+    .delete(authenticate.verifyUser, (req, res, next) => {
         Leaders.findByIdAndRemove(req.params.leaderId)
         .then((leader) => {
             res.statusCode = 200;

@@ -17,7 +17,8 @@ var dishRouter = require("./routes/dishRouter");
 var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
 
-var authentication = require("./authentication")
+var authentication = require("./authentication");
+var config = require("./config");
 
 var app = express();
 
@@ -26,7 +27,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 // Mongo database 
-const url = "mongodb://localhost:27017/conFusion";
+const url = config.mongoUrl;
 const connection = Mongoose.connect(url);
 
 connection
@@ -41,23 +42,14 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use(session({
-  name: 'session-id',
-  secret: '12345-67890-09876-54321',
-  saveUninitialized: false,
-  resave: false,
-  store: new FileStore()
-}));
-
 app.use(passport.initialize());
-app.use(passport.session());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use((req, res, next) => {
+/* app.use((req, res, next) => {
   if(req.user) {
     next();
     return ;
@@ -66,7 +58,7 @@ app.use((req, res, next) => {
   const err = new Error("You are not authorized");
   err.status = 401;
   next(err);
-});
+}); */
 
 app.use("/dishes", dishRouter);
 app.use("/leaders", leaderRouter);
