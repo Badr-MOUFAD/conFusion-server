@@ -7,8 +7,8 @@ const Schema = Mongoose.Schema;
 
 const commentSchema = new Schema({
     author: {
-        type: String,
-        required: true
+        type: Mongoose.Schema.Types.ObjectId,
+        ref: "User"
     },
     comment: {
         type: String,

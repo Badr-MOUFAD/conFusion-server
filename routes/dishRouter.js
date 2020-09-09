@@ -11,6 +11,7 @@ dishRouter.use(bodyParser.json());
 dishRouter.route("/")
     .get((req, res, next) => {
         Dishes.find({})
+            .populate("comments.author")
             .then((dishes) => {
                 res.statusCode = 200;
                 res.json(dishes);
@@ -19,7 +20,7 @@ dishRouter.route("/")
                 console.log(err.message);
             });
     })
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         Dishes.create(req.body)
             .then((dish) => {
                 res.statusCode = 200;
@@ -29,11 +30,11 @@ dishRouter.route("/")
                 console.log(err.message);
             });
     })
-    .put(authenticate.verifyUser, (req, res, next) =>{
+    .put(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) =>{
         res.statusCode = 403;
         res.end("PUT method is not supported");
     })
-    .delete(authenticate.verifyUser, (req, res, next) =>{
+    .delete(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) =>{
         Dishes.remove({})
             .then(() => {
                 res.end("All dishes were deleted");
@@ -46,6 +47,7 @@ dishRouter.route("/")
 dishRouter.route("/:dishId")
     .get((req, res, next) => {
         Dishes.findById(req.params.dishId)
+            .populate("comments.author")
             .then((dish) => {
                 res.statusCode = 200;
                 res.json(dish);
@@ -54,7 +56,7 @@ dishRouter.route("/:dishId")
                 console.log(err.message);
             });
     })
-    .put(authenticate.verifyUser, (req, res, next) => {
+    .put(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         Dishes.findByIdAndUpdate(req.params.dishId, { $set: req.body }, { new: true })
             .then((dish) => {
                 res.statusCode = 200;
@@ -64,11 +66,11 @@ dishRouter.route("/:dishId")
                 console.log(err.message);
             });
     })
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         res.statusCode = 403;
         res.end(`The POST operation is not allowed within ${req.params.dishId}`);
     })
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         Dishes.findByIdAndRemove(req.params.dishId)
             .then((dish) => {
                 res.end(`Dish with id: ${req.params.dishId} was successfully deleted`);
@@ -81,6 +83,7 @@ dishRouter.route("/:dishId")
 dishRouter.route("/:dishId/comments")
     .get((req, res, next) => {
         Dishes.findById(req.params.dishId)
+            .populate("comments.author")
             .then((dish) => {
                 if(dish) {
                     res.statusCode = 200;
@@ -88,7 +91,7 @@ dishRouter.route("/:dishId/comments")
                     res.json(dish.comments);
                 }
                 
-                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+                throw new Error(`dish with id: ${req.params.dishId} doses not exist`);
             })
             .catch((err) => {
                 next(err);
@@ -98,11 +101,12 @@ dishRouter.route("/:dishId/comments")
         Dishes.findById(req.params.dishId)
             .then((dish) => {
                 if(dish) {
+                    req.body.author = req.user._id;
                     dish.comments.push(req.body);  
-                    return dish.save()                   
+                    return dish.save();                  
                 }
 
-                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+                throw new Error(`dish with id: ${req.params.dishId} doses not exist`);
             })
             .then((newDish) => {
                 res.statusCode = 200;
@@ -110,14 +114,14 @@ dishRouter.route("/:dishId/comments")
                 res.json(newDish);
             })
             .catch((err) => {
-                next(err)
+                next(err);
             });
     })
     .put(authenticate.verifyUser, (req, res, next) =>{
         res.statusCode = 403;
         res.end("PUT method is not supported");
     })
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
                 if(dish) {
@@ -125,7 +129,7 @@ dishRouter.route("/:dishId/comments")
                     return dish.save();                  
                 }
 
-                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+                throw new Error(`dish with id: ${req.params.dishId} doses not exist`);
             })
             .then((newDish) => {
                 res.statusCode = 200;
@@ -140,6 +144,7 @@ dishRouter.route("/:dishId/comments")
 dishRouter.route("/:dishId/comments/:commentId")
     .get((req, res, next) => {
         Dishes.findById(req.params.dishId)
+            .populate("comments.author")
             .then((dish) => {
                 if(dish && dish.comments.id(req.params.commentId)) {
                     res.statusCode = 200;
@@ -147,7 +152,7 @@ dishRouter.route("/:dishId/comments/:commentId")
                     res.json(dish.comments.id(req.params.commentId));                 
                 }
 
-                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+                throw new Error(`dish with id: ${req.params.dishId} doses not exist`);
             })
             .catch((err) => {
                 next(err);
@@ -160,25 +165,28 @@ dishRouter.route("/:dishId/comments/:commentId")
     .put(authenticate.verifyUser, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
-                if(dish && dish.comments.id(req.params.commentId)) {
-                    const comment = dish.comments.id(req.params.commentId);
-                    
-                    if(req.body.rating) {
-                        comment.rating = req.body.rating; 
-                    }
-
-                    if(req.body.comment) {
-                        comment.comment = req.body.comment;
-                    }
-
-                    return dish.save();
+                if(!dish) {
+                    throw new Error("Dish doesn t exist");
                 }
-
-                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+                if (!dish.comments.id(req.params.commentId)) {
+                    throw new Error("dish doesn t have this comment");
+                }
+                if(req.user._id !== dish.comments.id(req.params.commentId).author.toString()) {
+                    throw new Error("Users can only modify their own comments");
+                }
+                
+                if(req.body.comment) {
+                    dish.comments.id(req.params.commentId).comment = req.body.comment;
+                }
+                if(req.body.rating) {
+                    dish.comments.id(req.params.commentId).rating = req.body.rating;
+                }
+                
+                return dish.save();
             })
-            .then((newDish) => {
+            .then((newDish) => {                
                 res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
+                res.setHeader("Content-Type", "application/json");
                 res.json(newDish);
             })
             .catch((err) => {
@@ -188,16 +196,23 @@ dishRouter.route("/:dishId/comments/:commentId")
     .delete(authenticate.verifyUser, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
-                if(dish && dish.comments.id(req.params.commentId)) {
-                    dish.comments.id(req.params.commentId).remove();
-                    
-                    return dish.save();
+                if(!dish) {
+                    throw new Error("Dish doesn t exist");
+                }
+                if (!dish.comments.id(req.params.commentId)) {
+                    throw new Error("dish doesn t have this comment");
+                }
+                if(req.user._id !== dish.comments.id(req.params.commentId).author.toString()) {
+                    throw Error("Users can only delete their own comments");
                 }
 
-                next(new Error(`dish with id: ${req.params.dishId} doses not exist`));
+                dish.comments.id(req.params.commentId).remove();
+                    
+                return dish.save();
             })
-            .then((newDish) => {
+            .then((newDish) => {                
                 res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
                 res.json(newDish);
             })
             .catch((err) => {

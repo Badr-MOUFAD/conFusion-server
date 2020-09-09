@@ -20,7 +20,7 @@ promoRouter.route("/")
             next(err);
         })
     })
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         Promotions.create(req.body)
         .then((promo) => {
             res.statusCode = 200;
@@ -31,11 +31,11 @@ promoRouter.route("/")
             next(err);
         })
     })
-    .put(authenticate.verifyUser, (req, res, next) =>{
+    .put(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) =>{
         res.statusCode = 403;
         res.end("PUT method is not supported");
     })
-    .delete(authenticate.verifyUser, (req, res, next) =>{
+    .delete(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) =>{
         Promotions.remove({})
         .then(() => {
             res.statusCode = 200;
@@ -59,7 +59,7 @@ promoRouter.route("/:promoId")
             next(err);
         })
     })
-    .put(authenticate.verifyUser, (req, res, next) => {
+    .put(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         Promotions.findByIdAndUpdate(req.params.promoId, { $set: req.body }, { new: true })
         .then((updatedPromo) => {
             res.statusCode = 200;
@@ -70,11 +70,11 @@ promoRouter.route("/:promoId")
             next(err);
         })
     })
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         res.statusCode = 403;
         res.end(`The POST operation is not allowed within ${req.params.promoId}`);
     })
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
         Promotions.findByIdAndRemove(req.params.promoId)
         .then((promo) => {
             res.statusCode = 200;

@@ -11,8 +11,13 @@ const Users = require("../models/users");
 router.use(bodyParser.json());
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+router.get('/', authenticate.verifyUser, authenticate.vertifyAdmin, (req, res, next) => {
+  Users.find({})
+  .then((users) => {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.json(users);
+  })
 });
 
 router.post("/signup", (req, res, next) => {
@@ -25,9 +30,20 @@ router.post("/signup", (req, res, next) => {
         return ;
       }
 
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.json({ success: true, status: 'Registration Successful!' });
+      if(req.body.firstName) {
+        user.firstName = req.body.firstName;
+      }
+      
+      if(req.body.lastName) {
+        user.lastName = req.body.lastName;
+      }
+
+      user.save()
+        .then((user) => {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.json({ success: true, status: 'Registration Successful!' });
+        });
     });
 });
 

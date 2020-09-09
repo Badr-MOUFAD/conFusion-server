@@ -16,6 +16,7 @@ var usersRouter = require('./routes/users');
 var dishRouter = require("./routes/dishRouter");
 var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
+var favoriteRouter = require("./routes/favoriteRouter");
 
 var authentication = require("./authentication");
 var config = require("./config");
@@ -49,20 +50,10 @@ app.use('/users', usersRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-/* app.use((req, res, next) => {
-  if(req.user) {
-    next();
-    return ;
-  }
-
-  const err = new Error("You are not authorized");
-  err.status = 401;
-  next(err);
-}); */
-
 app.use("/dishes", dishRouter);
 app.use("/leaders", leaderRouter);
 app.use("/promotions", promoRouter);
+app.use("/favorites", favoriteRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

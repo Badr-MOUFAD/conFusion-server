@@ -24,7 +24,7 @@ var opts = {
 exports.jwtPassport = passport.use(new JwtStrategy(opts,
     (jwt_payload, done) => {
         console.log("JWT payload: ", jwt_payload);
-        Users.findOne({_id: jwt_payload._id}, (err, user) => {
+        Users.findOne({ _id: jwt_payload._id }, (err, user) => {
             if(err) {
                 return done(err, false);
             }
@@ -39,3 +39,14 @@ exports.jwtPassport = passport.use(new JwtStrategy(opts,
 );
 
 exports.verifyUser = passport.authenticate('jwt', { session: false });
+
+exports.vertifyAdmin = (req, res, next) => {
+    if(req.user.admin) {
+        next();
+        return ;
+    }
+
+    const err = new Error("You are not authorized to perform this operation!");
+    err.status = 403;
+    next(err);
+}
